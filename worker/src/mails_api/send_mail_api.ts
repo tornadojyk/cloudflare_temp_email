@@ -318,3 +318,30 @@ api.delete('/api/sendbox/:id', async (c) => {
         success: success
     })
 })
+
+// 修改点 4：直接在此文件末尾，追加 Webhook 公开状态回传路由端点
+api.post('/open_api/resend_webhook', async (c) => {
+    try {
+        const payload = await c.req.json();
+        const eventType = payload.type; // 值为 "email.delivered" (送达) 或 "email.bounced" (退信)
+        const emailId = payload.data?.email_id; // Resend 对应的发信唯一 ID
+
+        if (emailId && eventType) {
+            let status = 'sent';
+            if (eventType === 'email.delivered') {
+                status = 'delivered'; // 状态更新为：已送达
+            } else if (eventType === 'email.bounced') {
+                status = 'bounced'; // 状态更新为：退信
+            }
+
+            // 将状态实时更新进 D1 数据库的 sendbox 表中
+            await c.env.DB.prepare(
+                "UPDATE sendbox SET status = ? WHERE external_id = ?"
+            ).bind(status, emailId).run();
+        }
+        return c.json({ success: true });
+    } catch (err) {
+        console.error("Resend Webhook 处理失败:", err);
+        return c.json({ error: "failed" }, 500);
+    }
+})
