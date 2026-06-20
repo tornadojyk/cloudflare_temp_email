@@ -15,6 +15,12 @@ DEFAULT_LANG = "zh"
 TITLE = "免费临时邮箱" 
 PREFIX = "tmp"
 
+# 开启网站私有化密码（只有输入这个密码的人才能创建邮箱）
+PASSWORDS = ["Kevinjyk@850812#"]
+
+# 允许用户创建邮箱开关（保持为 true，但受上方密码保护）
+ENABLE_USER_CREATE_EMAIL = true
+
 # ==================== 【2. 邮箱域名配置 - 需修改】 ====================
 # 填入你接收邮件的域名（比如 mail.yourdomain.com 或 yourdomain.com）
 # 注：如果你只有一个域名，两个方括号里填一样的即可
