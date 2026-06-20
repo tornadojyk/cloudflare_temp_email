@@ -74,13 +74,14 @@ export const sendMailByBinding = async (
     });
 }
 
+// 修改点 1：将返回值变更为 Promise<string | null>，用于将 Resend 的邮件 ID 往上传递
 const sendMailByResend = async (
     c: Context<HonoCustomType>, address: string,
     reqJson: {
         from_name: string, to_mail: string, to_name: string,
         subject: string, content: string, is_html: boolean
     }
-): Promise<void> => {
+): Promise<string | null> => {
     const mailDomain = getMailDomain(address);
     const token = c.env[
         `RESEND_TOKEN_${mailDomain.replace(/\./g, "_").toUpperCase()}`
@@ -100,6 +101,7 @@ const sendMailByResend = async (
         throw new Error(`Resend error: ${error.name} ${error.message}`);
     }
     console.log(`Resend success: ${JSON.stringify(data)}`);
+    return data?.id || null; // 成功时，将 Resend 分配的发信 ID 返回
 }
 
 const sendMailBySmtp = async (
@@ -194,13 +196,17 @@ export const sendMail = async (
     }
     const sendMailBindingEnabled = isSendMailBindingEnabled(c, mailDomain);
 
+    // 修改点 2：新增变量接收外部邮件 ID
+    let external_id: string | null = null; 
+
     // send mail workflow
     if (sendByVerifiedAddressList) {
         // do not update balance
     }
     // send by resend
     else if (resendEnabled) {
-        await sendMailByResend(c, address, reqJson);
+        // 捕获 Resend 返回的 ID 
+        external_id = await sendMailByResend(c, address, reqJson);
     }
     else if (smtpConfig) {
         await sendMailBySmtp(c, address, reqJson, smtpConfig);
@@ -237,14 +243,15 @@ export const sendMail = async (
             ...reqJson,
             geoData: geoData,
         };
+        // 修改点 3：将 external_id 以及 默认发信状态 'sent' 写入 D1 数据库中
         const { success: success2 } = await c.env.DB.prepare(
-            `INSERT INTO sendbox (address, raw) VALUES (?, ?)`
-        ).bind(address, JSON.stringify(body)).run();
+            `INSERT INTO sendbox (address, raw, external_id, status) VALUES (?, ?, ?, ?)`
+        ).bind(address, JSON.stringify(body), external_id, 'sent').run();
         if (!success2) {
             console.warn(`Failed to save to sendbox for ${address}`);
         }
     } catch (e) {
-        console.warn(`Failed to save to sendbox for ${address}`);
+        console.warn(`Failed to save to sendbox for ${address}`, e);
     }
 }
 
