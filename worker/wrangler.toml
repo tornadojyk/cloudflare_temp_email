@@ -55,7 +55,7 @@ id = "408a1de59e4f41f7934a2d798c995b93"
 
 # ==================== 【7. 发件配置 - 需修改】 ====================
 # 注入你刚才在 Resend 申请的 API 发信密钥（注意：由于你的域名是 yz.cc.cd，变量名必须严格为以下拼写，点换成下划线）
-RESEND_TOKEN_YZ_CC_CD = "re_fuGo1fKs_3TiB2uTcPysZBh2w3kP6UJNc"
+RESEND_TOKEN = "re_fuGo1fKs_3TiB2uTcPysZBh2w3kP6UJNc"
 
 
 # ==================== 以下为高级/可选配置（默认保持注释置灰即可） ====================
